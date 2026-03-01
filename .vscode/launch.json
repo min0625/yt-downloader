@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Main",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/yt_downloader/__main__.py",
+            "console": "integratedTerminal",
+        }
+    ]
+}
