@@ -43,6 +43,7 @@ class SubtitleDownloadService:
             "skip_download": True,
             "outtmpl": output_template,
             "noplaylist": True,
+            "progress_hooks": list(request.progress_hooks),
         }
 
         try:

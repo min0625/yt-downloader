@@ -48,6 +48,8 @@ class VideoDownloadService:
                 "Missing yt-dlp dependency, run `uv sync --dev` first"
             ) from exc
 
+        hooks = list(request.progress_hooks)
+
         try:
             if _has_ffmpeg():
                 with youtube_dl(
@@ -57,6 +59,7 @@ class VideoDownloadService:
                         "outtmpl": output_template,
                         "noplaylist": True,
                         "merge_output_format": request.format,
+                        "progress_hooks": hooks,
                     }
                 ) as ydl:
                     result_code = ydl.download([request.url])
@@ -72,6 +75,7 @@ class VideoDownloadService:
                         "format": _build_video_selector(request.format),
                         "outtmpl": video_output_template,
                         "noplaylist": True,
+                        "progress_hooks": hooks,
                     }
                 ) as ydl:
                     video_result_code = ydl.download([request.url])
@@ -87,6 +91,7 @@ class VideoDownloadService:
                         "format": _build_audio_selector(),
                         "outtmpl": audio_output_template,
                         "noplaylist": True,
+                        "progress_hooks": hooks,
                     }
                 ) as ydl:
                     audio_result_code = ydl.download([request.url])

@@ -180,14 +180,13 @@ uv run yt-downloader \
 ### Completed
 
 - CLI 參數介面（`--url`、`--output-dir`、`--mode`、`--format`）
-- 下載 service 抽象層（`video` 已接實作、`audio`/`subtitle` 仍為 stub）
-- `tests/` 基本覆蓋（參數成功、參數錯誤、分派路徑）
+- 下載 service 完整實作（`video`、`audio`、`subtitle` 均已接實作，非 stub）
+- `tests/` 基本覆蓋（參數成功、參數錯誤、分派路徑、各 service 單元測試）
 - README 使用範例與最小 Troubleshooting
 
 ### Next
 
-- 將 `audio`、`subtitle` 從 stub 替換為實際下載實作
-- 針對實際下載流程補強整合測試與錯誤處理（目前已先涵蓋 video 單元測試）
+- 針對實際下載流程補強整合測試與錯誤處理
 
 ## Disclaimer
 

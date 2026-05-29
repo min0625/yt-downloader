@@ -58,6 +58,7 @@ exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
+    a.zipfiles,
     a.datas,
     [],
     name="yt-downloader",
@@ -70,7 +71,6 @@ exe = EXE(
     # console=True：保留 console 以支援 CLI 模式；
     # GUI 模式下 gui.py 會在 Windows 上呼叫 ShowWindow(hwnd, 0) 隱藏視窗
     console=True,
-    onefile=True,
 )
 
 # macOS：另外輸出 .app bundle（可雙擊開啟）

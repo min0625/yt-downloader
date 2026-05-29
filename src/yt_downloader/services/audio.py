@@ -31,6 +31,7 @@ class AudioDownloadService:
             **_base_ydl_opts(),
             "noplaylist": True,
             "outtmpl": output_template,
+            "progress_hooks": list(request.progress_hooks),
         }
 
         if _has_ffmpeg():
@@ -48,9 +49,10 @@ class AudioDownloadService:
             if request.format == "m4a":
                 ydl_opts["format"] = "bestaudio[ext=m4a]/bestaudio/best"
             else:
-                # mp3 streams are rare, fall back to m4a
-                ydl_opts["format"] = "bestaudio[ext=m4a]/bestaudio/best"
-
+                # mp3 requires ffmpeg for conversion; without ffmpeg it is not possible
+                raise InputError(
+                    "mp3 format requires ffmpeg; install ffmpeg or use --format m4a"
+                )
         try:
             with youtube_dl(ydl_opts) as ydl:
                 result_code = ydl.download([request.url])

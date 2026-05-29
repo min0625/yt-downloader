@@ -8,9 +8,8 @@ from typing import TYPE_CHECKING
 
 from nicegui import run, ui
 
-from yt_downloader.errors import DownloaderError, DownloadError, InputError
-from yt_downloader.services import DownloadRequest
-from yt_downloader.services.base import _has_ffmpeg
+from yt_downloader.errors import DownloaderError
+from yt_downloader.services import DownloadRequest, get_service
 
 if TYPE_CHECKING:
     from nicegui.events import ValueChangeEventArguments
@@ -78,12 +77,6 @@ def _build_ui() -> None:
         download_btn.props("disabled")
         log.push("\u25b6 Starting download...")
 
-        request = DownloadRequest(
-            url=url,
-            output_dir=Path(output_dir),
-            format=fmt,
-        )
-
         # Use Queue to collect yt-dlp progress messages
         msg_queue: queue.Queue[str] = queue.Queue()
 
@@ -97,11 +90,17 @@ def _build_ui() -> None:
             elif status == "finished":
                 msg_queue.put("  Stream download complete, post-processing...")
 
+        request = DownloadRequest(
+            url=url,
+            output_dir=Path(output_dir),
+            format=fmt,
+            progress_hooks=(progress_hook,),
+        )
+
         def run_download() -> str | None:
             """Run download in a background thread, return error string or None."""
             try:
-                # Inject progress hook into service (video/audio/subtitle all go through yt-dlp)
-                _inject_progress_hook(request, mode, fmt, progress_hook)
+                get_service(mode).download(request)
                 return None
             except DownloaderError as exc:
                 return str(exc)
@@ -134,140 +133,6 @@ def _build_ui() -> None:
         download_btn.props(remove="disabled")
 
     download_btn.on_click(on_download_click)
-
-
-def _inject_progress_hook(
-    request: DownloadRequest,
-    mode: str,
-    fmt: str,
-    hook: object,
-) -> None:
-    """Call yt-dlp directly and inject the progress hook without modifying the service interface."""
-    import importlib
-
-    try:
-        yt_dlp_module = importlib.import_module("yt_dlp")
-        YoutubeDL = yt_dlp_module.YoutubeDL  # noqa: N806
-    except ModuleNotFoundError as exc:
-        raise DownloadError(
-            "Missing yt-dlp dependency, run `uv sync --dev` first"
-        ) from exc
-
-    has_ffmpeg = _has_ffmpeg()
-    output_template = str(request.output_dir / "%(title)s.%(ext)s")
-    request.output_dir.mkdir(parents=True, exist_ok=True)
-
-    if mode == "video":
-        from yt_downloader.services.video import (  # noqa: PLC0415
-            VIDEO_FORMATS,
-            _build_audio_selector,
-            _build_merged_selector,
-            _build_video_selector,
-        )
-
-        if fmt not in VIDEO_FORMATS:
-            raise InputError(
-                f"video mode does not support format: {fmt}, use mp4 or webm"
-            )
-
-        if has_ffmpeg:
-            ydl_opts = {
-                "format": _build_merged_selector(fmt),
-                "outtmpl": output_template,
-                "noplaylist": True,
-                "merge_output_format": fmt,
-                "progress_hooks": [hook],
-            }
-        else:
-            video_tmpl = str(request.output_dir / "%(title)s.video.%(ext)s")
-            audio_tmpl = str(request.output_dir / "%(title)s.audio.%(ext)s")
-            # Without ffmpeg: download video stream first
-            ydl_opts = {
-                "format": _build_video_selector(fmt),
-                "outtmpl": video_tmpl,
-                "noplaylist": True,
-                "progress_hooks": [hook],
-            }
-            with YoutubeDL(ydl_opts) as ydl:
-                rc = ydl.download([request.url])
-            if rc != 0:
-                raise DownloadError(f"Video stream download failed, exit code: {rc}")
-            # Download audio stream
-            ydl_opts = {
-                "format": _build_audio_selector(),
-                "outtmpl": audio_tmpl,
-                "noplaylist": True,
-                "progress_hooks": [hook],
-            }
-            with YoutubeDL(ydl_opts) as ydl:
-                rc = ydl.download([request.url])
-            if rc != 0:
-                raise DownloadError(f"Audio stream download failed, exit code: {rc}")
-            return
-
-    elif mode == "audio":
-        from yt_downloader.services.audio import AUDIO_FORMATS  # noqa: PLC0415
-
-        if fmt not in AUDIO_FORMATS:
-            raise InputError(
-                f"audio mode does not support format: {fmt}, use mp3 or m4a"
-            )
-
-        if has_ffmpeg:
-            ydl_opts = {
-                "format": "bestaudio/best",
-                "outtmpl": output_template,
-                "noplaylist": True,
-                "postprocessors": [
-                    {
-                        "key": "FFmpegExtractAudio",
-                        "preferredcodec": fmt,
-                        "preferredquality": "192",
-                    }
-                ],
-                "progress_hooks": [hook],
-            }
-        else:
-            ydl_opts = {
-                "format": "bestaudio[ext=m4a]/bestaudio/best",
-                "outtmpl": output_template,
-                "noplaylist": True,
-                "progress_hooks": [hook],
-            }
-
-    elif mode == "subtitle":
-        from yt_downloader.services.subtitle import (  # noqa: PLC0415
-            DEFAULT_LANGS,
-            SUBTITLE_FORMATS,
-        )
-
-        if fmt not in SUBTITLE_FORMATS:
-            raise InputError(
-                f"subtitle mode does not support format: {fmt}, use srt or vtt"
-            )
-
-        effective_format = fmt if has_ffmpeg or fmt == "vtt" else "vtt"
-        ydl_opts = {
-            "writesubtitles": True,
-            "writeautomaticsub": True,
-            "subtitleslangs": DEFAULT_LANGS,
-            "subtitlesformat": effective_format,
-            "skip_download": True,
-            "outtmpl": output_template,
-            "noplaylist": True,
-            "progress_hooks": [hook],
-        }
-    else:
-        raise InputError(f"Unsupported download mode: {mode}")
-
-    try:
-        with YoutubeDL(ydl_opts) as ydl:
-            rc = ydl.download([request.url])
-    except Exception as exc:
-        raise DownloadError(f"Unknown error during download: {exc}") from exc
-
-    if rc != 0:
-        raise DownloadError(f"Download failed, exit code: {rc}")
 
 
 @ui.page("/")

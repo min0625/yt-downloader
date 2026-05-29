@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import shutil
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
 
@@ -11,6 +12,7 @@ class DownloadRequest:
     url: str
     output_dir: Path
     format: str
+    progress_hooks: tuple[Callable[[dict], None], ...] = field(default=())
 
 
 class DownloadService(Protocol):
