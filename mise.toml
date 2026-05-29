@@ -1,0 +1,18 @@
+[tools]
+node = "25.9.0"
+uv = "0.11.16"
+
+[settings]
+python.uv_venv_auto = "create|source"
+
+[tasks.sync]
+run = "uv sync --dev && uv run pre-commit install"
+
+[tasks.run]
+run = "uv run yt-downloader"
+
+[tasks.pre-commit]
+run = "uv run pre-commit run --show-diff-on-failure --color=always --all-files"
+
+[tasks.check]
+depends = ["pre-commit"]
