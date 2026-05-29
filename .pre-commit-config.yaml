@@ -1,0 +1,41 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: mixed-line-ending
+      - id: detect-private-key
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+
+  - repo: local
+    hooks:
+      - id: ruff-check-fix
+        name: ruff check fix
+        entry: uv run ruff check --force-exclude --fix
+        language: unsupported
+        types: [python]
+        pass_filenames: false
+
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format --force-exclude
+        language: unsupported
+        types: [python]
+        pass_filenames: false
+
+      - id: ty-check
+        name: ty check
+        entry: uv run ty check --force-exclude
+        language: unsupported
+        types: [python]
+        pass_filenames: false
+
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: unsupported
+        types: [file]
+        pass_filenames: false

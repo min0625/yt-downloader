@@ -4,8 +4,9 @@
 
 ## Project Overview
 
-- 本專案為 Python CLI，用於下載 YouTube 影片／音訊／字幕。
+- 本專案為 Python 工具，支援 **CLI**（命令列）與 **GUI**（原生視窗）兩種模式，用於下載 YouTube 影片／音訊／字幕。
 - 套件管理與環境工具統一使用 [`uv`](https://docs.astral.sh/uv/)。
+- 開發環境版本管理使用 [`mise`](https://mise.jdx.dev/)（見 `mise.toml`）。
 - 變更以「小範圍、精準修改」為原則；除非明確要求，避免大型重構。
 
 ## Instruction Priority
@@ -24,20 +25,20 @@
 - 對外 API、CLI 旗標與既有公開介面名稱不得僅因語系調整而變更。
 - 進行翻譯或語氣調整時，需保持技術語意與可執行指令不變。
 
-## Development Environment and Installation (uv only)
+## Development Environment and Installation
 
 - 禁止直接使用 `pip` 或 `python -m pip`。
-- 安裝開發相依：`uv sync --dev`
-- 執行專案命令時使用：`uv run <cmd>`
+- 初始環境設置：`mise install` 後再執行 `mise run sync`
+- 安裝開發相依：`mise run sync`（執行 `uv sync --dev` 並設定 git hooks）
+- 執行專案命令時使用：`uv run <cmd>` 或 `mise run <task>`
 
 ## Common Commands
 
-- Test: `uv run pytest`
-- Format: `uv run ruff format`
-- Lint: `uv run ruff check`
-- Auto Fix: `uv run ruff check --fix`
-- Type Check: `uv run ty check`
-- Run CLI: `uv run yt-downloader`
+- Sync（安裝依賴 + 設定 git hooks）: `mise run sync`
+- Check（全部：格式化 + lint fix + ty 型別檢查 + 測試）: `mise run check`
+- Run GUI: `uv run yt-downloader`（無引數）
+- Run CLI: `uv run yt-downloader --url "..." --mode video --format mp4`
+- Pack: `uv run pyinstaller yt-downloader.spec`
 
 ## Code Style and Quality
 
