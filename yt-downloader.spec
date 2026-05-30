@@ -43,6 +43,8 @@ a = Analysis(
         "yt_downloader.services.video",
         "yt_downloader.services.audio",
         "yt_downloader.services.subtitle",
+        # Dynamically imported at runtime — must be listed explicitly
+        "yt_downloader._build_info",
     ],
     # 使用 pywebview 內建 hook（收集 Windows DLL 與 JS 資源）
     hookspath=[_webview_hooks],
@@ -69,8 +71,7 @@ exe = EXE(
     upx_exclude=[],
     runtime_tmpdir=None,
     # console=False：不建立 console 子系統視窗，GUI 模式雙擊不會出現 terminal。
-    # CLI 模式從命令提示字元（cmd / PowerShell）執行時，會繼承父程序的 stdio，
-    # 因此 argparse --version 與 print() 輸出仍可正常顯示。
+    # Windows 打包版本為 GUI-only；CLI 模式請透過 `uv run yt-downloader` 使用。
     console=False,
 )
 

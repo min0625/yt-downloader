@@ -86,13 +86,18 @@ __dirty__: bool
 __commit__, __ref__, __commit_date__, __build_time__, __dirty__ = _get_build_info()
 
 
-def format_version_info() -> str:
-    """Return a formatted multi-line version string."""
-    dirty_mark = "-dirty" if __dirty__ else ""
-    return (
-        f"yt-downloader {__version__}{dirty_mark}\n"
-        f"  commit     : {__commit__}\n"
-        f"  ref        : {__ref__}\n"
-        f"  commit time: {__commit_date__}\n"
-        f"  build time : {__build_time__}"
+def format_version_compact() -> str:
+    """Return compact version string: v{version}+{YYYYMMDD}.{commit}[-dirty]"""
+    base = __version__.split("+")[0]
+    date_compact = (
+        __commit_date__[:10].replace("-", "")
+        if len(__commit_date__) >= 10
+        else __commit_date__
     )
+    dirty_mark = "-dirty" if __dirty__ else ""
+    return f"v{base}+{date_compact}.{__commit__}{dirty_mark}"
+
+
+def format_version_info() -> str:
+    """Return version string for --version output."""
+    return format_version_compact()

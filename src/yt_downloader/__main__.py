@@ -51,6 +51,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     # When argv is None, read actual command-line args; with args enter CLI mode, without args launch GUI
     effective_args = list(argv) if argv is not None else sys.argv[1:]
 
+    # Frozen Windows binary is GUI-only (CLI is not supported in the packaged exe)
+    if getattr(sys, "frozen", False) and sys.platform == "win32":
+        from yt_downloader.gui import launch  # noqa: PLC0415
+
+        launch()
+        return 0
+
     if not effective_args:
         from yt_downloader.gui import launch  # noqa: PLC0415
 
