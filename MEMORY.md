@@ -19,14 +19,14 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 - 版本格式：`format_version_compact()` 返回 `v{base}+{YYYYMMDD}.{commit}[-dirty]`，`format_version_info()` 直接回傳此格式；GUI 視窗標題與頁面底部標籤均顯示版本。
 - Windows 凍結執行檔（`sys.frozen + win32`）發現無法同時保留 GUI 與 CLI 模式，因此凍結 exe 一律啟動 GUI（跳過 CLI 切換邏輯）；CLI 仰賴透過 `uv run yt-downloader` 使用。
 - 測試基準：`uv run pytest` 收集 18 個測試並全部通過。
-- `README.md` 為主要專案文件（zh-TW）；含免責聲明（開頭短版 + `## Disclaimer` 章節）。
-- `SUBTASKS.md` 用於集中管理可執行子任務清單（目前 Task 1–7 全部完成）。
+- `README.md` 為主要專案文件（zh-TW）；含免責聲明（`## Disclaimer` 章節在文件尾部）。
 - 版本機制：`hatch-vcs` 從 git tag 決定版本；`_version.py` 提供 `__version__`、`__commit__`、`__ref__`、`__commit_date__`、`__build_time__`、`__dirty__`；CLI `--version` 旗標；GUI 底部顯示版本標籤（含 dirty mark）；打包前執行 `scripts/generate_build_info.py`（產出 BUILD_VERSION/BUILD_COMMIT/BUILD_BRANCH/BUILD_COMMIT_DATE/BUILD_TIME/BUILD_DIRTY）。
 
 ## Commands
 
 - 初始環境設置：`mise install` 後執行 `mise run sync`
 - Sync（安裝依賴 + 設定 git hooks）: `mise run sync`（執行 `uv sync --dev --frozen && uv run pre-commit install`）
+- Release（自動觸發）: push to `main` 自動執行 `.github/workflows/release.yml`；建置 Windows exe + macOS app，並發布到 GitHub Releases （nightly pre-release）。
 - Run all checks（格式化 + lint fix + ty 型別檢查 + 測試 + 打包）: `mise run check`
 - Run pre-commit on all files: `uv run pre-commit run --all-files` or `mise run pre-commit`
 - Run GUI: `uv run yt-downloader`（無引數）
@@ -70,6 +70,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 
 ## Last Updated
 
+- 2026-05-31: 建立 Release workflow（push to main 自動建置 nightly）；移除 SUBTASKS.md；修復 README.md 重複 Disclaimer 與錯位 bullets；AGENTS.md 更正 uv sync 指令描述。
 - 2026-05-31: Windows frozen exe 改為 GUI only；版本格式改為 `v0.0.0+YYYYMMDD.commit[-dirty]`；Browse 按鈕改用 `app.native.main_window` 修復要求；GUI 視窗標題加入版本資訊。
 - 2026-05-30: 修復 PR#3 review：_version.py frozen 版本讀取、spec console=True + gui.py 隱藏視窗、新增 --version 測試、MEMORY.md 符號名稱與命令修正。
 - 2026-05-30: 修正文件不一致：spec console=False（非 console=True）、mise run check 含打包步驟、Pack 指令補充 mise run pack。

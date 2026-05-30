@@ -29,7 +29,7 @@
 
 - 禁止直接使用 `pip` 或 `python -m pip`。
 - 初始環境設置：`mise install` 後再執行 `mise run sync`
-- 安裝開發相依：`mise run sync`（執行 `uv sync --dev` 並設定 git hooks）
+- 安裝開發相依：`mise run sync`（執行 `uv sync --dev --frozen` 並設定 git hooks）
 - 執行專案命令時使用：`uv run <cmd>` 或 `mise run <task>`
 
 ## Common Commands
