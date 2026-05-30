@@ -68,9 +68,10 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    # console=True：建立 console 子系統，CLI 模式可正常輸出 stdio。
-    # GUI 模式在 launch() 中以 ctypes 隱藏 console 視窗（僅 Windows）。
-    console=True,
+    # console=False：不建立 console 子系統視窗，GUI 模式雙擊不會出現 terminal。
+    # CLI 模式從命令提示字元（cmd / PowerShell）執行時，會繼承父程序的 stdio，
+    # 因此 argparse --version 與 print() 輸出仍可正常顯示。
+    console=False,
 )
 
 # macOS：另外輸出 .app bundle（可雙擊開啟）
