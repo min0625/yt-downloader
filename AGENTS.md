@@ -35,10 +35,10 @@
 ## Common Commands
 
 - Sync（安裝依賴 + 設定 git hooks）: `mise run sync`
-- Check（全部：格式化 + lint fix + ty 型別檢查 + 測試）: `mise run check`
+- Check（全部：格式化 + lint fix + ty 型別檢查 + 測試 + 打包）: `mise run check`
 - Run GUI: `uv run yt-downloader`（無引數）
 - Run CLI: `uv run yt-downloader --url "..." --mode video --format mp4`
-- Pack: `uv run pyinstaller yt-downloader.spec`
+- Pack（含 build info 生成）: `mise run pack`
 
 ## Code Style and Quality
 

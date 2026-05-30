@@ -6,15 +6,9 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from nicegui import run, ui
+from nicegui import app, run, ui
 
-from yt_downloader._version import (
-    __commit__,
-    __commit_date__,
-    __dirty__,
-    __ref__,
-    __version__,
-)
+from yt_downloader._version import format_version_compact
 from yt_downloader.errors import DownloaderError
 from yt_downloader.services import DownloadRequest, get_service
 
@@ -54,22 +48,18 @@ def _build_ui() -> None:
                 label="Output Format",
             ).classes("flex-1")
 
-        output_dir_input = ui.input(
-            label="Output Directory",
-            value="downloads/",
-        ).classes("w-full")
+        with ui.row().classes("w-full gap-2 items-end"):
+            output_dir_input = ui.input(
+                label="Output Directory",
+                value=str(Path.home() / "Downloads"),
+            ).classes("flex-1")
+            pick_dir_btn = ui.button("Browse...")
 
         download_btn = ui.button("Start Download").classes("w-full")
 
         log = ui.log(max_lines=200).classes("w-full h-48 font-mono text-sm")
 
-        _commit_date_short = (
-            __commit_date__[:10] if len(__commit_date__) >= 10 else __commit_date__
-        )
-        _dirty_mark = "-dirty" if __dirty__ else ""
-        ui.label(
-            f"v{__version__}{_dirty_mark}  {__ref__}@{__commit__}  {_commit_date_short}"
-        ).classes("text-xs text-gray-400 self-end")
+        ui.label(format_version_compact()).classes("text-xs text-gray-400 self-end")
 
     def on_mode_change(e: ValueChangeEventArguments) -> None:
         options = FORMAT_OPTIONS.get(e.value, [])
@@ -79,6 +69,30 @@ def _build_ui() -> None:
 
     mode_select.on_value_change(on_mode_change)
 
+    async def on_pick_folder() -> None:
+        """Open native folder picker and update output directory input."""
+        try:
+            window = app.native.main_window
+            if window is None:
+                ui.notify("Unable to open folder picker", type="warning")
+                return
+            current = (output_dir_input.value or "").strip() or str(
+                Path.home() / "Downloads"
+            )
+            # 20 = webview.FileDialog.FOLDER (integer literal avoids NiceGUI proxy type issue)
+            # WindowProxy dynamically proxies pywebview; use getattr to satisfy the type checker
+            result = await getattr(window, "create_file_dialog")(
+                20,
+                directory=current,
+                allow_multiple=False,
+            )
+            if result:
+                output_dir_input.value = result[0]
+        except Exception:
+            ui.notify("Unable to open folder picker", type="warning")
+
+    pick_dir_btn.on_click(on_pick_folder)
+
     async def on_download_click() -> None:
         url = (url_input.value or "").strip()
         if not url:
@@ -87,7 +101,7 @@ def _build_ui() -> None:
 
         mode = mode_select.value or "video"
         fmt = format_select.value or FORMAT_OPTIONS[mode][0]
-        output_dir = (output_dir_input.value or "downloads/").strip()
+        output_dir = (output_dir_input.value or str(Path.home() / "Downloads")).strip()
 
         download_btn.props("disabled")
         log.push("\u25b6 Starting download...")
@@ -165,7 +179,7 @@ def launch() -> None:
             ctypes.windll.user32.ShowWindow(hwnd, 0)
     ui.run(
         native=True,
-        title="YT Downloader",
+        title=f"YT Downloader {format_version_compact()}",
         host="127.0.0.1",
         port=8765,
         reload=False,

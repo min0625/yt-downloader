@@ -15,7 +15,10 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
   - `video`：有 ffmpeg → 合併單檔；無 ffmpeg → 分離串流（`.video.*` + `.audio.*`）。
   - `audio`：有 ffmpeg → `FFmpegExtractAudio` 轉換；無 ffmpeg → 原生 m4a。
   - `subtitle`：優先語言 `["zh-Hant", "zh-Hans", "en"]`，有 ffmpeg 支援 srt，無 ffmpeg 退回 vtt。
-- 測試基準：`uv run pytest` 收集 17 個測試並全部通過。
+- GUI Output Directory 預設為 `Path.home() / "Downloads"`（系統下載資料夾）；旁有 Browse 按鈕使用 `app.native.main_window` 開啟原生資料夾選擇對話框（`dialog_type=20` 選擇資料夾）。
+- 版本格式：`format_version_compact()` 返回 `v{base}+{YYYYMMDD}.{commit}[-dirty]`，`format_version_info()` 直接回傳此格式；GUI 視窗標題與頁面底部標籤均顯示版本。
+- Windows 凍結執行檔（`sys.frozen + win32`）發現無法同時保留 GUI 與 CLI 模式，因此凍結 exe 一律啟動 GUI（跳過 CLI 切換逻輯）；CLI 仇賴透過 `uv run yt-downloader` 使用。
+- 測試基準：`uv run pytest` 收集 18 個測試並全部通過。
 - `README.md` 為主要專案文件（zh-TW）；含免責聲明（開頭短版 + `## Disclaimer` 章節）。
 - `SUBTASKS.md` 用於集中管理可執行子任務清單（目前 Task 1–7 全部完成）。
 - 版本機制：`hatch-vcs` 從 git tag 決定版本；`_version.py` 提供 `__version__`、`__commit__`、`__ref__`、`__commit_date__`、`__build_time__`、`__dirty__`；CLI `--version` 旗標；GUI 底部顯示版本標籤（含 dirty mark）；打包前執行 `scripts/generate_build_info.py`（產出 BUILD_VERSION/BUILD_COMMIT/BUILD_BRANCH/BUILD_COMMIT_DATE/BUILD_TIME/BUILD_DIRTY）。
@@ -24,11 +27,11 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 
 - 初始環境設置：`mise install` 後執行 `mise run sync`
 - Sync（安裝依賴 + 設定 git hooks）: `mise run sync`（執行 `uv sync --dev --frozen && uv run pre-commit install`）
-- Run all checks（格式化 + lint fix + ty 型別檢查 + 測試）: `mise run check`
+- Run all checks（格式化 + lint fix + ty 型別檢查 + 測試 + 打包）: `mise run check`
 - Run pre-commit on all files: `uv run pre-commit run --all-files` or `mise run pre-commit`
 - Run GUI: `uv run yt-downloader`（無引數）
 - Run CLI: `uv run yt-downloader --url "..." --mode video --format mp4`
-- Pack: `uv run pyinstaller yt-downloader.spec`
+- Pack（含 build info 生成）: `mise run pack`
 - 安裝 `ffmpeg` 後請重開終端，確認：`ffmpeg -version`、`ffprobe -version`
 - Skills find: `npx skills find "<query>"`
 - Skills add (project): `npx skills add <owner/repo@skill> -y`
@@ -48,15 +51,14 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 - 本 repo 的暫存下載輸出位於 `downloads/`，需透過 `.gitignore` 排除，避免媒體檔誤入版控。
 - 進行 PR review 時先以 diff/changed files 為準，再比對 PR 內文摘要；PR 描述可能未即時反映後續 amend。
 - 技能文件安全檢視需區分「教學示例」與「實際執行指令」：例如 `curl|sh`/`irm|iex` 或未參數化 SQL 可能出現在示例中，應標記為高風險樣式但不直接等同惡意。
-- 若需驗證目前 CLI 介面、分派與所有服務回歸，先執行 `uv run pytest tests/`；目前基準為 `collected 17 items` 並應全部通過。
+- 若需驗證目前 CLI 介面、分派與所有服務回歸，先執行 `uv run pytest`；目前基準為 `collected 18 items` 並應全部通過。
 - 若 `video` 產出為 `.video.*` + `.audio.*` 兩檔，代表目前走到無 `ffmpeg` 的 fallback 路徑；若要單檔輸出，先確認 `where ffmpeg` / `where ffprobe`。
 - GUI 模式使用 NiceGUI native（pywebview）；若 pywebview 初始化失敗，請確認 `nicegui[native]` 已安裝（`uv sync --dev`）。
-- `gui.py` 的 `_inject_progress_hook` 直接呼叫 yt-dlp（不透過 service），以便注入 `progress_hooks`；若 service 邏輯更新，需同步確認此函式的格式選擇邏輯仍對齊。
-- 打包指令：`uv run pyinstaller yt-downloader.spec`；輸出在 `dist/yt-downloader.exe`（Windows）或 `dist/yt-downloader` + `dist/YT Downloader.app`（macOS）。
-- Windows 打包後雙擊 GUI 模式時，`gui.py launch()` 會以 `ctypes.windll.user32.ShowWindow(hwnd, 0)` 隱藏 console 視窗；spec 使用 `console=True` 以保留 CLI stdio 輸出能力。
+- 打包指令：`mise run pack`（含 `generate_build_info.py`）；輸出在 `dist/yt-downloader.exe`（Windows）或 `dist/yt-downloader` + `dist/YT Downloader.app`（macOS）。
+- Windows 凍結打包陥阱：Windows exe (`console=False`) **僅支援 GUI 模式**；`main()` 在 `frozen+win32` 時直接 `launch()` GUI，不進入 CLI 分支。CLI 透過 `uv run` 使用。
 - pywebview 模組名稱為 `webview`（非 `pywebview`），`webview/__pyinstaller/hook-webview.py` 提供內建 PyInstaller hook，spec 已透過 `hookspath` 引用。
-- **PyInstaller + pywebview multiprocessing 陷阱**：pywebview 在 Windows 使用 `multiprocessing` spawn 子程序，子程序會帶 `--multiprocessing-fork parent_pid=... pipe_handle=...` 參數重新執行 exe，導致 `sys.argv[1:]` 非空進入 CLI 模式、argparse 報錯。修復方法：在 `if __name__ == '__main__':` 的第一行加 `multiprocessing.freeze_support()`。
-- pytest 在本 repo 需明確指定 `tests/` 目錄（`uv run pytest tests/ -q`），直接執行 `uv run pytest -q` 可能遇到路徑問題。
+- **NiceGUI Browse 按鈕 (`app.native.main_window`) 陷阱**：不可直接用 `webview.windows[0]`（NiceGUI 3.x 目窗由 NiceGUI 自就管理，`webview.windows` 為空）。正確做法：`app.native.main_window` + `getattr(window, 'create_file_dialog')(20, ...)` await 直接呼叫，`20` = `webview.FileDialog.FOLDER` 對應整數值（透過 proxy 取常數會得到 `Proxy` 型別透過 ty 就會安全）。
+- **NiceGUI `WindowProxy.create_file_dialog` ty 屬性陷阱**：`WindowProxy` 透過 `__getattr__` 動態轉發，ty 無法偵測屬性。用 `getattr(window, 'create_file_dialog')(...)` 被告知回傳 `Any`，即可通過 ty。
 
 ## Decisions
 
@@ -68,4 +70,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 
 ## Last Updated
 
+- 2026-05-31: Windows frozen exe 改為 GUI only；版本格式改為 `v0.0.0+YYYYMMDD.commit[-dirty]`；Browse 按鈕改用 `app.native.main_window` 修復要求；GUI 視窗標題加入版本資訊。
 - 2026-05-30: 修復 PR#3 review：_version.py frozen 版本讀取、spec console=True + gui.py 隱藏視窗、新增 --version 測試、MEMORY.md 符號名稱與命令修正。
+- 2026-05-30: 修正文件不一致：spec console=False（非 console=True）、mise run check 含打包步驟、Pack 指令補充 mise run pack。
+- 2026-05-30: 修正 MEMORY.md 過時內容：測試數量 17→18、移除不存在的 _inject_progress_hook pitfall、移除過時 pytest 路徑 pitfall、修正 Commands Pack 指令。
