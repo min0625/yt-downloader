@@ -23,6 +23,14 @@ def _git(*args: str) -> str:
 
 
 def _get_package_version() -> str:
+    if getattr(sys, "frozen", False):
+        try:
+            import importlib
+
+            _bi = importlib.import_module("yt_downloader._build_info")
+            return str(getattr(_bi, "BUILD_VERSION", "unknown"))
+        except ImportError:
+            return "unknown"
     try:
         return version("yt-downloader")
     except PackageNotFoundError:

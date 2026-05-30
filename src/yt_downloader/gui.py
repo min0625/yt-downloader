@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import queue
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -156,6 +157,12 @@ def _index() -> None:
 
 def launch() -> None:
     """Launch GUI mode (native window)."""
+    if sys.platform == "win32":
+        import ctypes
+
+        hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+        if hwnd:
+            ctypes.windll.user32.ShowWindow(hwnd, 0)
     ui.run(
         native=True,
         title="YT Downloader",

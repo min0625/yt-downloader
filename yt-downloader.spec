@@ -68,9 +68,9 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    # console=False：不建立 console 子系統視窗，GUI 模式雙擊不會出現 terminal。
-    # CLI 模式從命令提示字元執行時仍可繼承父程序的 stdio，輸出正常。
-    console=False,
+    # console=True：建立 console 子系統，CLI 模式可正常輸出 stdio。
+    # GUI 模式在 launch() 中以 ctypes 隱藏 console 視窗（僅 Windows）。
+    console=True,
 )
 
 # macOS：另外輸出 .app bundle（可雙擊開啟）
