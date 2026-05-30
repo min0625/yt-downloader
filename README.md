@@ -171,14 +171,8 @@ uv run yt-downloader \
 - **video 輸出兩個分離串流**：表示未偵測到 ffmpeg，請完成上方 FFmpeg Setup。
 - **GUI 視窗未出現**：確認 `uv sync --dev` 已執行，並確認 pywebview 平台相容性。
 - **打包後無法執行**：重新執行 `uv run pyinstaller yt-downloader.spec`（須在目標平台執行）。
-
-## Disclaimer
-
-本專案僅供教育與學習用途。下載 YouTube 影片可能違反 YouTube 服務條款及著作權法規。
-請在使用前確認相關法規，並尊重內容創作者的著作權。作者不承擔因誤用本工具所產生的任何法律責任。
-
-- 若播放器顯示「不支援 Opus 音效」：使用 `--format mp4`，目前會優先選擇 `m4a` 音軌再合併輸出。
-- 若要確認目前行為是否正常：執行 `uv run pytest`，應看到測試全通過。
+- **播放器顯示「不支援 Opus 音效」**：使用 `--format mp4`，目前會優先選擇 `m4a` 音軌再合併輸出。
+- **確認行為是否正常**：執行 `uv run pytest`，應看到測試全通過。
 
 ## Roadmap
 
@@ -191,7 +185,9 @@ uv run yt-downloader \
 
 ### Next
 
-- 針對實際下載流程補強整合測試與錯誤處理
+- 整合測試：補充真實下載流程的端對端測試
+- 版本 tag 發布流程：規劃正式 semver 標籤推送，對應 Release workflow 發布正式版本
+- GUI 測試：加入基本 GUI unit test（格式切換邏輯等）
 
 ## Disclaimer
 
