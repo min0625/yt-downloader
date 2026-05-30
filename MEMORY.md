@@ -26,7 +26,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 
 - 初始環境設置：`mise install` 後執行 `mise run sync`
 - Sync（安裝依賴 + 設定 git hooks）: `mise run sync`（執行 `uv sync --dev --frozen && uv run pre-commit install`）
-- Release（自動觸發）: push to `main` 自動執行 `.github/workflows/release.yml`；建置 Windows exe + macOS app，并發布到 GitHub Releases （nightly pre-release）。
+- Release（自動觸發）: push to `main` 自動執行 `.github/workflows/release.yml`；建置 Windows exe + macOS app，並發布到 GitHub Releases （nightly pre-release）。
 - Run all checks（格式化 + lint fix + ty 型別檢查 + 測試 + 打包）: `mise run check`
 - Run pre-commit on all files: `uv run pre-commit run --all-files` or `mise run pre-commit`
 - Run GUI: `uv run yt-downloader`（無引數）
