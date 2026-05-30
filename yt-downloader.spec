@@ -68,9 +68,9 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    # console=True：保留 console 以支援 CLI 模式；
-    # GUI 模式下 gui.py 會在 Windows 上呼叫 ShowWindow(hwnd, 0) 隱藏視窗
-    console=True,
+    # console=False：不建立 console 子系統視窗，GUI 模式雙擊不會出現 terminal。
+    # CLI 模式從命令提示字元執行時仍可繼承父程序的 stdio，輸出正常。
+    console=False,
 )
 
 # macOS：另外輸出 .app bundle（可雙擊開啟）
