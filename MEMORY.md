@@ -17,7 +17,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
   - `subtitle`：優先語言 `["zh-Hant", "zh-Hans", "en"]`，有 ffmpeg 支援 srt，無 ffmpeg 退回 vtt。
 - GUI Output Directory 預設為 `Path.home() / "Downloads"`（系統下載資料夾）；旁有 Browse 按鈕使用 `app.native.main_window` 開啟原生資料夾選擇對話框（`dialog_type=20` 選擇資料夾）。
 - 版本格式：`format_version_compact()` 返回 `v{base}+{YYYYMMDD}.{commit}[-dirty]`，`format_version_info()` 直接回傳此格式；GUI 視窗標題與頁面底部標籤均顯示版本。
-- Windows 凍結執行檔（`sys.frozen + win32`）發現無法同時保留 GUI 與 CLI 模式，因此凍結 exe 一律啟動 GUI（跳過 CLI 切換逻輯）；CLI 仇賴透過 `uv run yt-downloader` 使用。
+- Windows 凍結執行檔（`sys.frozen + win32`）發現無法同時保留 GUI 與 CLI 模式，因此凍結 exe 一律啟動 GUI（跳過 CLI 切換邏輯）；CLI 仰賴透過 `uv run yt-downloader` 使用。
 - 測試基準：`uv run pytest` 收集 18 個測試並全部通過。
 - `README.md` 為主要專案文件（zh-TW）；含免責聲明（開頭短版 + `## Disclaimer` 章節）。
 - `SUBTASKS.md` 用於集中管理可執行子任務清單（目前 Task 1–7 全部完成）。
@@ -55,9 +55,9 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 - 若 `video` 產出為 `.video.*` + `.audio.*` 兩檔，代表目前走到無 `ffmpeg` 的 fallback 路徑；若要單檔輸出，先確認 `where ffmpeg` / `where ffprobe`。
 - GUI 模式使用 NiceGUI native（pywebview）；若 pywebview 初始化失敗，請確認 `nicegui[native]` 已安裝（`uv sync --dev`）。
 - 打包指令：`mise run pack`（含 `generate_build_info.py`）；輸出在 `dist/yt-downloader.exe`（Windows）或 `dist/yt-downloader` + `dist/YT Downloader.app`（macOS）。
-- Windows 凍結打包陥阱：Windows exe (`console=False`) **僅支援 GUI 模式**；`main()` 在 `frozen+win32` 時直接 `launch()` GUI，不進入 CLI 分支。CLI 透過 `uv run` 使用。
+- Windows 凍結打包陷阱：Windows exe (`console=False`) **僅支援 GUI 模式**；`main()` 在 `frozen+win32` 時直接 `launch()` GUI，不進入 CLI 分支。CLI 透過 `uv run` 使用。
 - pywebview 模組名稱為 `webview`（非 `pywebview`），`webview/__pyinstaller/hook-webview.py` 提供內建 PyInstaller hook，spec 已透過 `hookspath` 引用。
-- **NiceGUI Browse 按鈕 (`app.native.main_window`) 陷阱**：不可直接用 `webview.windows[0]`（NiceGUI 3.x 目窗由 NiceGUI 自就管理，`webview.windows` 為空）。正確做法：`app.native.main_window` + `getattr(window, 'create_file_dialog')(20, ...)` await 直接呼叫，`20` = `webview.FileDialog.FOLDER` 對應整數值（透過 proxy 取常數會得到 `Proxy` 型別透過 ty 就會安全）。
+- **NiceGUI Browse 按鈕 (`app.native.main_window`) 陷阱**：不可直接用 `webview.windows[0]`（NiceGUI 3.x 視窗由 NiceGUI 自行管理，`webview.windows` 為空）。正確做法：`app.native.main_window` + `getattr(window, 'create_file_dialog')(20, ...)` await 直接呼叫，`20` = `webview.FileDialog.FOLDER` 對應整數值（透過 proxy 取常數會得到 `Proxy` 型別，無法通過 ty 型別檢查）。
 - **NiceGUI `WindowProxy.create_file_dialog` ty 屬性陷阱**：`WindowProxy` 透過 `__getattr__` 動態轉發，ty 無法偵測屬性。用 `getattr(window, 'create_file_dialog')(...)` 被告知回傳 `Any`，即可通過 ty。
 
 ## Decisions

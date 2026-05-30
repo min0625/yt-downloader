@@ -88,8 +88,8 @@ def _build_ui() -> None:
             )
             if result:
                 output_dir_input.value = result[0]
-        except Exception:
-            ui.notify("Unable to open folder picker", type="warning")
+        except Exception as exc:
+            ui.notify(f"Unable to open folder picker: {exc}", type="warning")
 
     pick_dir_btn.on_click(on_pick_folder)
 
