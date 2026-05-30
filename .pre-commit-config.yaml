@@ -12,6 +12,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: uv-lock
+        name: uv lock
+        entry: uv lock
+        language: unsupported
+        files: ^(uv\.lock|pyproject\.toml|uv\.toml)$
+        pass_filenames: false
+
       - id: ruff-check-fix
         name: ruff check fix
         entry: uv run ruff check --force-exclude --fix

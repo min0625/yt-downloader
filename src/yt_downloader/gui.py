@@ -8,6 +8,13 @@ from typing import TYPE_CHECKING
 
 from nicegui import run, ui
 
+from yt_downloader._version import (
+    __commit__,
+    __commit_date__,
+    __dirty__,
+    __ref__,
+    __version__,
+)
 from yt_downloader.errors import DownloaderError
 from yt_downloader.services import DownloadRequest, get_service
 
@@ -55,6 +62,14 @@ def _build_ui() -> None:
         download_btn = ui.button("Start Download").classes("w-full")
 
         log = ui.log(max_lines=200).classes("w-full h-48 font-mono text-sm")
+
+        _commit_date_short = (
+            __commit_date__[:10] if len(__commit_date__) >= 10 else __commit_date__
+        )
+        _dirty_mark = "-dirty" if __dirty__ else ""
+        ui.label(
+            f"v{__version__}{_dirty_mark}  {__ref__}@{__commit__}  {_commit_date_short}"
+        ).classes("text-xs text-gray-400 self-end")
 
     def on_mode_change(e: ValueChangeEventArguments) -> None:
         options = FORMAT_OPTIONS.get(e.value, [])
@@ -142,15 +157,12 @@ def _index() -> None:
 
 def launch() -> None:
     """Launch GUI mode (native window)."""
-    # Windows: when packaged as an executable, double-clicking opens a console window;
-    # hide it in GUI mode
     if sys.platform == "win32":
         import ctypes
 
         hwnd = ctypes.windll.kernel32.GetConsoleWindow()
         if hwnd:
-            ctypes.windll.user32.ShowWindow(hwnd, 0)  # SW_HIDE
-
+            ctypes.windll.user32.ShowWindow(hwnd, 0)
     ui.run(
         native=True,
         title="YT Downloader",

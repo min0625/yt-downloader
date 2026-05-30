@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import multiprocessing
 import sys
 from argparse import ArgumentParser, Namespace
 from collections.abc import Sequence
@@ -13,7 +14,14 @@ FORMATS = ("mp4", "webm", "mp3", "m4a", "srt", "vtt")
 
 
 def build_parser() -> ArgumentParser:
+    from yt_downloader._version import format_version_info  # noqa: PLC0415
+
     parser = ArgumentParser(prog="yt-downloader")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=format_version_info(),
+    )
     parser.add_argument("--url", required=True, help="YouTube URL")
     parser.add_argument(
         "--output-dir",
@@ -67,4 +75,6 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    # Required for PyInstaller + multiprocessing (pywebview spawns child processes on Windows)
+    multiprocessing.freeze_support()
     raise SystemExit(main())

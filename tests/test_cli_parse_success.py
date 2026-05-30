@@ -1,4 +1,15 @@
+import pytest
+
 from yt_downloader.__main__ import parse_args
+
+
+def test_parse_args_version(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        parse_args(["--version"])
+
+    assert exc_info.value.code == 0
+    captured = capsys.readouterr()
+    assert captured.out.strip()
 
 
 def test_parse_args_success() -> None:

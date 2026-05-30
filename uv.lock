@@ -1425,7 +1425,6 @@ wheels = [
 
 [[package]]
 name = "yt-downloader"
-version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "nicegui", extra = ["native"] },

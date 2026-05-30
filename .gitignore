@@ -14,6 +14,9 @@ build/
 dist/
 *.egg-info/
 
+# Generated build metadata (embedded into PyInstaller frozen builds)
+src/yt_downloader/_build_info.py
+
 # Test / coverage artifacts
 .pytest_cache/
 .coverage
