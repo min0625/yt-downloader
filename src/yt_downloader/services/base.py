@@ -32,11 +32,11 @@ def _get_bundled_ffmpeg_exe() -> str | None:
 def _get_ffmpeg_location() -> str | None:
     """Return the ffmpeg directory for yt-dlp's ffmpeg_location option.
 
-    Returns None when system ffmpeg is on PATH (yt-dlp auto-detects it).
-    Returns the parent directory of the bundled binary when only imageio-ffmpeg
-    is available, so yt-dlp can find ffmpeg there.
+    Returns None when system ffmpeg AND ffprobe are both on PATH (yt-dlp auto-detects them).
+    Returns the parent directory of the bundled binary when the system install is
+    incomplete or absent, so yt-dlp can find ffmpeg there.
     """
-    if shutil.which("ffmpeg") is not None:
+    if shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None:
         return None
     exe = _get_bundled_ffmpeg_exe()
     if exe is not None:
