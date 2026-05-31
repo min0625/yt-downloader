@@ -29,15 +29,19 @@ _webview_hooks = os.path.join(os.path.dirname(_webview.__file__), "__pyinstaller
 webview_datas = collect_data_files("webview")
 webview_hiddenimports = collect_submodules("webview")
 
+# ---------- imageio-ffmpeg（bundled ffmpeg binary）----------
+imageio_ffmpeg_datas = collect_data_files("imageio_ffmpeg")
+
 # ---------- Analysis ----------
 a = Analysis(
     ["src/yt_downloader/__main__.py"],
     pathex=["."],
     binaries=[],
-    datas=nicegui_datas + webview_datas,
+    datas=nicegui_datas + webview_datas + imageio_ffmpeg_datas,
     hiddenimports=nicegui_hiddenimports
     + webview_hiddenimports
     + [
+        "imageio_ffmpeg",
         "yt_dlp",
         "yt_downloader.gui",
         "yt_downloader.services.video",

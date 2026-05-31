@@ -7,18 +7,20 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 - Python CLI + GUI 工具，用於下載 YouTube 影片／音訊／字幕。
 - Package/environment workflow uses `uv` only；開發環境版本管理使用 `mise`（見 `mise.toml`）。
 - Repo uses `src/` layout: `src/yt_downloader/`。
-- `pyproject.toml`：dependencies 含 `nicegui[native]`、`yt-dlp`；dev 含 `pyinstaller`、`pytest`、`ruff`、`ty`。
+- `pyproject.toml`：dependencies 含 `imageio-ffmpeg`、`nicegui[native]`、`yt-dlp`；dev 含 `pyinstaller`、`pytest`、`ruff`、`ty`。
 - CLI 參數介面：`--url`（必要）、`--output-dir`（預設 `downloads/`）、`--mode`（`video|audio|subtitle`）、`--format`（`mp4|webm|mp3|m4a|srt|vtt`）。
 - 模式偵測：`main()` 判斷 `sys.argv[1:]` 是否為空；無引數 → GUI，有引數 → CLI。
 - GUI 模式以 NiceGUI 3.x 實作（`src/yt_downloader/gui.py`）：原生視窗（pywebview），port 8765，含即時進度顯示（queue + asyncio 輪詢）；Log 支援滑鼠選取、Copy Log 按鈕（clipboard API）、Export Log 按鈕（Blob 下載）。
 - 下載服務：`video`、`audio`、`subtitle` 均已實作真實下載邏輯（非 stub）。
-  - `video`：有 ffmpeg → 合併單檔；無 ffmpeg → 分離串流（`.video.*` + `.audio.*`）。
-  - `audio`：有 ffmpeg → `FFmpegExtractAudio` 轉換；無 ffmpeg → 原生 m4a。
-  - `subtitle`：優先語言 `["zh-Hant", "zh-Hans", "en"]`，有 ffmpeg 支援 srt，無 ffmpeg 退回 vtt。
+  - ffmpeg 透過 `imageio-ffmpeg` 自動提供（隨 pip 依賴打包）；`base._get_bundled_ffmpeg_exe()` 取得路徑，`_get_ffmpeg_location()` 回傳目錄供 yt-dlp `ffmpeg_location` 選項使用。
+  - `_has_ffmpeg()`：先檢查系統 ffmpeg+ffprobe，再 fallback 到 imageio-ffmpeg；二者皆無時才認定無 ffmpeg。
+  - `video`：有 ffmpeg（系統或 bundled）→ 合併單檔；二者均無 → 分離串流（`.video.*` + `.audio.*`）。
+  - `audio`：有 ffmpeg → `FFmpegExtractAudio` 轉換（含 mp3）；二者均無 → 原生 m4a（mp3 無法使用）。
+  - `subtitle`：優先語言 `["zh-Hant", "zh-Hans", "en"]`，有 ffmpeg 支援 srt，二者均無退回 vtt。
 - GUI Output Directory 預設為 `Path.home() / "Downloads"`（系統下載資料夾）；旁有 Browse 按鈕使用 `app.native.main_window` 開啟原生資料夾選擇對話框（`dialog_type=20` 選擇資料夾）。
 - 版本格式：`format_version_compact()` 返回 `v{base}+{YYYYMMDD}.{commit}[-dirty]`，`format_version_info()` 直接回傳此格式；GUI 視窗標題與頁面底部標籤均顯示版本。
 - Windows 凍結執行檔（`sys.frozen + win32`）發現無法同時保留 GUI 與 CLI 模式，因此凍結 exe 一律啟動 GUI（跳過 CLI 切換邏輯）；CLI 仰賴透過 `uv run yt-downloader` 使用。
-- 測試基準：`uv run pytest` 收集 18 個測試並全部通過。
+- 測試基準：`uv run pytest` 收集 19 個測試並全部通過。
 - `README.md` 為主要專案文件（zh-TW）；含免責聲明（`## Disclaimer` 章節在文件尾部）。
 - 版本機制：`hatch-vcs` 從 git tag 決定版本；`_version.py` 提供 `__version__`、`__commit__`、`__ref__`、`__commit_date__`、`__build_time__`、`__dirty__`；CLI `--version` 旗標；GUI 底部顯示版本標籤（含 dirty mark）；打包前執行 `scripts/generate_build_info.py`（產出 BUILD_VERSION/BUILD_COMMIT/BUILD_BRANCH/BUILD_COMMIT_DATE/BUILD_TIME/BUILD_DIRTY）。
 
@@ -52,7 +54,10 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 - 進行 PR review 時先以 diff/changed files 為準，再比對 PR 內文摘要；PR 描述可能未即時反映後續 amend。
 - 技能文件安全檢視需區分「教學示例」與「實際執行指令」：例如 `curl|sh`/`irm|iex` 或未參數化 SQL 可能出現在示例中，應標記為高風險樣式但不直接等同惡意。
 - 若需驗證目前 CLI 介面、分派與所有服務回歸，先執行 `uv run pytest`；目前基準為 `collected 18 items` 並應全部通過。
-- 若 `video` 產出為 `.video.*` + `.audio.*` 兩檔，代表目前走到無 `ffmpeg` 的 fallback 路徑；若要單檔輸出，先確認 `where ffmpeg` / `where ffprobe`。
+- 若 `video` 產出為 `.video.*` + `.audio.*` 兩檔，代表「系統 ffmpeg 與 imageio-ffmpeg 均不可用」的極端 fallback 路徑，正常情況下 imageio-ffmpeg 為依賴故不會發生。
+- imageio-ffmpeg 只提供 `ffmpeg`（無 `ffprobe`），yt-dlp 的合併（FFmpegMergerPP）與音訊轉換（FFmpegExtractAudio）均只需 ffmpeg，故功能正常；ffprobe 版本顯示為 None 屬預期行為。
+- `_get_bundled_ffmpeg_exe()` 傳回 ffmpeg 可執行檔路徑；`_get_ffmpeg_location()` 傳回其父目錄（傳給 yt-dlp 的 `ffmpeg_location`）。測試中可 monkeypatch `yt_downloader.services.base._get_bundled_ffmpeg_exe`。
+- PyInstaller spec 已用 `collect_data_files("imageio_ffmpeg")` 收錄 ffmpeg binary，打包後 exe 可直接使用。
 - GUI 模式使用 NiceGUI native（pywebview）；若 pywebview 初始化失敗，請確認 `nicegui[native]` 已安裝（`uv sync --dev`）。
 - 打包指令：`mise run pack`（含 `generate_build_info.py`）；輸出在 `dist/yt-downloader.exe`（Windows）或 `dist/yt-downloader` + `dist/YT Downloader.app`（macOS）。
 - Windows 凍結打包陷阱：Windows exe (`console=False`) **僅支援 GUI 模式**；`main()` 在 `frozen+win32` 時直接 `launch()` GUI，不進入 CLI 分支。CLI 透過 `uv run` 使用。
@@ -72,6 +77,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 
 ## Last Updated
 
+- 2026-05-31: feat(services) - 新增 imageio-ffmpeg 作為 bundled ffmpeg 供應者；修改 `_has_ffmpeg`、新增 `_get_bundled_ffmpeg_exe`/`_get_ffmpeg_location`；更新 spec 打包 binary；測試增至 19 項；README 移除手動安裝 ffmpeg 要求。
 - 2026-05-31: fix(gui) - Export Log 加空內容防呆（`if not log_lines`）；下載 header 加入 timestamp/version/url/mode/format/output_dir；`datetime` import 加入。
 - 2026-05-31: fix(gui) - Export Log 改用 native save dialog（`create_file_dialog(30, ...)`）；版本標籤加 `select-text` class 可選取複製。
 - 2026-05-31: 建立 Release workflow（push to main 自動建置 nightly）；移除 SUBTASKS.md；修復 README.md 重複 Disclaimer 與錯位 bullets；AGENTS.md 更正 uv sync 指令描述。

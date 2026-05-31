@@ -26,9 +26,10 @@
 - Python：3.14+
 - 套件管理與環境工具：[`uv`](https://docs.astral.sh/uv/)
 - 開發環境版本管理：[`mise`](https://mise.jdx.dev/)
-- （選用）ffmpeg + ffprobe：video 高畫質合併、audio 格式轉換、srt 字幕產出
 
 > 本專案規範統一使用 `uv`，避免直接使用 `pip` 或 `python -m pip`。
+>
+> ffmpeg 已透過 [`imageio-ffmpeg`](https://github.com/imageio/imageio-ffmpeg) **自動隨套件提供**，無需手動安裝。若系統已安裝 ffmpeg，則優先使用系統版本；若未安裝，則自動改用內建版本。
 
 ## mise Setup
 
@@ -41,29 +42,6 @@
 
 # 安裝 mise.toml 中指定的工具版本
 mise install
-```
-
-## FFmpeg Setup
-
-ffmpeg 為選用依賴。有安裝時可合併高畫質影片、轉換音訊格式、產出 srt 字幕；無安裝時退回分離串流或 vtt 字幕。
-
-### Windows
-
-```bash
-winget install --id Gyan.FFmpeg -e
-```
-
-### macOS
-
-```bash
-brew install ffmpeg
-```
-
-### 確認安裝
-
-```bash
-ffmpeg -version
-ffprobe -version
 ```
 
 ## Quick Start
@@ -118,11 +96,11 @@ uv run pyinstaller yt-downloader.spec
 
 - ✅ **CLI 模式**：`--url`、`--mode`、`--format`、`--output-dir` 全部實作（透過 `uv run` 使用）。
 - ✅ **GUI 模式**：NiceGUI 3.x 原生視窗，含即時下載進度顯示；版本資訊顯示於視窗標題與頁面底部（格式：`v0.0.0+YYYYMMDD.commit[-dirty]`）；Browse 按鈕可開啟原生資料夾選擇對話框；Log 支援滑鼠選取複製，並提供 Copy Log / Export Log 按鈕。
-- ✅ **video**：有 ffmpeg 時合併單檔；無 ffmpeg 時輸出分離串流（`.video.*` + `.audio.*`）。
-- ✅ **audio**：有 ffmpeg 時轉換 mp3/m4a；無 ffmpeg 時下載原生 m4a。
-- ✅ **subtitle**：優先語言 `zh-Hant > zh-Hans > en`；有 ffmpeg 支援 srt，無 ffmpeg 退回 vtt。
-- ✅ **打包**：`yt-downloader.spec` 支援 Windows / macOS。
-- 測試：`uv run pytest` 目前收集 18 個測試並全部通過。
+- ✅ **video**：透過 [`imageio-ffmpeg`](https://github.com/imageio/imageio-ffmpeg) 自動提供 ffmpeg，**無需手動安裝**即可合併單檔；若系統已有 ffmpeg 則優先採用。
+- ✅ **audio**：同上，mp3/m4a 轉換無需手動安裝 ffmpeg。
+- ✅ **subtitle**：優先語言 `zh-Hant > zh-Hans > en`；srt/vtt 格式均支援（ffmpeg 已內建）。
+- ✅ **打包**：`yt-downloader.spec` 支援 Windows / macOS；imageio-ffmpeg binary 隨 exe 一起打包。
+- 測試：`uv run pytest` 目前收集 19 個測試並全部通過。
 
 ## Usage Examples
 
