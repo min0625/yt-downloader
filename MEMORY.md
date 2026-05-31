@@ -72,6 +72,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 
 ## Last Updated
 
+- 2026-05-31: fix(gui) - Export Log 加空內容防呆（`if not log_lines`）；下載 header 加入 timestamp/version/url/mode/format/output_dir；`datetime` import 加入。
 - 2026-05-31: fix(gui) - Export Log 改用 native save dialog（`create_file_dialog(30, ...)`）；版本標籤加 `select-text` class 可選取複製。
 - 2026-05-31: 建立 Release workflow（push to main 自動建置 nightly）；移除 SUBTASKS.md；修復 README.md 重複 Disclaimer 與錯位 bullets；AGENTS.md 更正 uv sync 指令描述。
 - 2026-05-31: Windows frozen exe 改為 GUI only；版本格式改為 `v0.0.0+YYYYMMDD.commit[-dirty]`；Browse 按鈕改用 `app.native.main_window` 修復要求；GUI 視窗標題加入版本資訊。
