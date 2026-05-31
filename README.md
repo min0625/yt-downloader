@@ -117,7 +117,7 @@ uv run pyinstaller yt-downloader.spec
 ## Current Status
 
 - ✅ **CLI 模式**：`--url`、`--mode`、`--format`、`--output-dir` 全部實作（透過 `uv run` 使用）。
-- ✅ **GUI 模式**：NiceGUI 3.x 原生視窗，含即時下載進度顯示；版本資訊顯示於視窗標題與頁面底部（格式：`v0.0.0+YYYYMMDD.commit[-dirty]`）；Browse 按鈕可開啟原生資料夾選擇對話框。
+- ✅ **GUI 模式**：NiceGUI 3.x 原生視窗，含即時下載進度顯示；版本資訊顯示於視窗標題與頁面底部（格式：`v0.0.0+YYYYMMDD.commit[-dirty]`）；Browse 按鈕可開啟原生資料夾選擇對話框；Log 支援滑鼠選取複製，並提供 Copy Log / Export Log 按鈕。
 - ✅ **video**：有 ffmpeg 時合併單檔；無 ffmpeg 時輸出分離串流（`.video.*` + `.audio.*`）。
 - ✅ **audio**：有 ffmpeg 時轉換 mp3/m4a；無 ffmpeg 時下載原生 m4a。
 - ✅ **subtitle**：優先語言 `zh-Hant > zh-Hans > en`；有 ffmpeg 支援 srt，無 ffmpeg 退回 vtt。

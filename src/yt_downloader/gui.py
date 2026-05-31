@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import queue
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -57,9 +59,66 @@ def _build_ui() -> None:
 
         download_btn = ui.button("Start Download").classes("w-full")
 
-        log = ui.log(max_lines=200).classes("w-full h-48 font-mono text-sm")
+        log_lines: list[str] = []
+        log = ui.log(max_lines=200).classes("w-full h-48 font-mono text-sm yt-dl-log")
 
-        ui.label(format_version_compact()).classes("text-xs text-gray-400 self-end")
+        # Make log text selectable via CSS override
+        ui.add_css(".yt-dl-log * { user-select: text !important; cursor: text; }")
+
+        async def on_copy_log() -> None:
+            """Copy all log lines to clipboard."""
+            content = "\n".join(log_lines)
+            await ui.run_javascript(
+                f"navigator.clipboard.writeText({json.dumps(content)})",
+                timeout=5.0,
+            )
+            ui.notify("Copied to clipboard", type="positive")
+
+        async def on_export_log() -> None:
+            """Export log via native save dialog."""
+            if not log_lines:
+                ui.notify("No log content to export", type="warning")
+                return
+            window = app.native.main_window
+            if window is None:
+                ui.notify("Unable to open save dialog", type="warning")
+                return
+            try:
+                # 30 = webview.FileDialog.SAVE (integer literal avoids NiceGUI proxy type issue)
+                result = await getattr(window, "create_file_dialog")(
+                    30,
+                    save_filename="yt-downloader-log.txt",
+                    file_types=("Text Files (*.txt)", "All Files (*.*)"),
+                )
+                if not result:
+                    return
+                save_path = result[0]
+                content = "\n".join(log_lines)
+
+                def write_file() -> None:
+                    Path(save_path).write_text(content, encoding="utf-8")
+
+                await run.io_bound(write_file)
+                ui.notify(f"Log saved to {save_path}", type="positive")
+            except Exception as exc:
+                ui.notify(f"Unable to save log: {exc}", type="warning")
+
+        def push_log(msg: str) -> None:
+            """Push a message to the log UI and internal buffer."""
+            log.push(msg)
+            log_lines.append(msg)
+
+        with ui.row().classes("w-full gap-2 justify-end"):
+            ui.button("Copy Log", on_click=on_copy_log).props(
+                "flat dense icon=content_copy"
+            )
+            ui.button("Export Log", on_click=on_export_log).props(
+                "flat dense icon=download"
+            )
+
+        ui.label(format_version_compact()).classes(
+            "text-xs text-gray-400 self-end select-text"
+        )
 
     def on_mode_change(e: ValueChangeEventArguments) -> None:
         options = FORMAT_OPTIONS.get(e.value, [])
@@ -104,7 +163,13 @@ def _build_ui() -> None:
         output_dir = (output_dir_input.value or str(Path.home() / "Downloads")).strip()
 
         download_btn.props("disabled")
-        log.push("\u25b6 Starting download...")
+        started_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        push_log(f"[{started_at}] ▶ Starting download")
+        push_log(f"  version    : {format_version_compact()}")
+        push_log(f"  url        : {url}")
+        push_log(f"  mode       : {mode}")
+        push_log(f"  format     : {fmt}")
+        push_log(f"  output_dir : {output_dir}")
 
         # Use Queue to collect yt-dlp progress messages
         msg_queue: queue.Queue[str] = queue.Queue()
@@ -144,19 +209,19 @@ def _build_ui() -> None:
         while not download_future.done():
             await asyncio.sleep(0.3)
             while not msg_queue.empty():
-                log.push(msg_queue.get_nowait())
+                push_log(msg_queue.get_nowait())
 
         # Flush remaining messages
         while not msg_queue.empty():
-            log.push(msg_queue.get_nowait())
+            push_log(msg_queue.get_nowait())
 
         error: str | None = download_future.result()
 
         if error:
-            log.push(f"\u2717 Error: {error}")
+            push_log(f"\u2717 Error: {error}")
             ui.notify("Download failed", type="negative")
         else:
-            log.push("\u2713 Download complete!")
+            push_log("\u2713 Download complete!")
             ui.notify("Download complete!", type="positive")
 
         download_btn.props(remove="disabled")

@@ -21,7 +21,7 @@
 ## Document and Comment Language
 
 - 文件（如 `README.md`、`AGENTS.md`、`MEMORY.md`、`memory/*.md`）預設使用 zh-TW。
-- 新增或修改程式註解時，預設使用 zh-TW（除非該檔案既有慣例明確要求英文）。
+- 程式碼（`.py`、`.toml` 等）內的所有文字（docstring、comment、error message、UI label）**統一使用英文**；`README.md` 例外。
 - 對外 API、CLI 旗標與既有公開介面名稱不得僅因語系調整而變更。
 - 進行翻譯或語氣調整時，需保持技術語意與可執行指令不變。
 
