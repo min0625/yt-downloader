@@ -10,7 +10,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 - `pyproject.toml`：dependencies 含 `nicegui[native]`、`yt-dlp`；dev 含 `pyinstaller`、`pytest`、`ruff`、`ty`。
 - CLI 參數介面：`--url`（必要）、`--output-dir`（預設 `downloads/`）、`--mode`（`video|audio|subtitle`）、`--format`（`mp4|webm|mp3|m4a|srt|vtt`）。
 - 模式偵測：`main()` 判斷 `sys.argv[1:]` 是否為空；無引數 → GUI，有引數 → CLI。
-- GUI 模式以 NiceGUI 3.x 實作（`src/yt_downloader/gui.py`）：原生視窗（pywebview），port 8765，含即時進度顯示（queue + asyncio 輪詢）。
+- GUI 模式以 NiceGUI 3.x 實作（`src/yt_downloader/gui.py`）：原生視窗（pywebview），port 8765，含即時進度顯示（queue + asyncio 輪詢）；Log 支援滑鼠選取、Copy Log 按鈕（clipboard API）、Export Log 按鈕（Blob 下載）。
 - 下載服務：`video`、`audio`、`subtitle` 均已實作真實下載邏輯（非 stub）。
   - `video`：有 ffmpeg → 合併單檔；無 ffmpeg → 分離串流（`.video.*` + `.audio.*`）。
   - `audio`：有 ffmpeg → `FFmpegExtractAudio` 轉換；無 ffmpeg → 原生 m4a。
@@ -40,7 +40,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 
 - CLI entrypoint is `src/yt_downloader/__main__.py`，負責模式偵測（GUI vs CLI）、參數解析與 service 分派，下載細節下放至 `src/yt_downloader/services/`。
 - GUI entrypoint 是 `src/yt_downloader/gui.py`，透過 `launch()` 以 NiceGUI native 模式啟動。
-- 進度顯示：GUI 透過 `queue.Queue` + progress_hook + asyncio 輪詢 (`asyncio.sleep(0.3)`) 更新 `ui.log`。
+- 進度顯示：GUI 透過 `queue.Queue` + progress_hook + asyncio 輪詢 (`asyncio.sleep(0.3)`) 更新 `ui.log`；`push_log()` helper 同步更新 `log_lines` list 供 Copy/Export 使用。
 - Packaging script command `yt-downloader` maps to `yt_downloader.__main__:main`.
 - 錯誤型別集中於 `src/yt_downloader/errors.py`（`InputError`、`DownloadError`、`DownloaderError`）。
 
@@ -59,17 +59,21 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 - pywebview 模組名稱為 `webview`（非 `pywebview`），`webview/__pyinstaller/hook-webview.py` 提供內建 PyInstaller hook，spec 已透過 `hookspath` 引用。
 - **NiceGUI Browse 按鈕 (`app.native.main_window`) 陷阱**：不可直接用 `webview.windows[0]`（NiceGUI 3.x 視窗由 NiceGUI 自行管理，`webview.windows` 為空）。正確做法：`app.native.main_window` + `getattr(window, 'create_file_dialog')(20, ...)` await 直接呼叫，`20` = `webview.FileDialog.FOLDER` 對應整數值（透過 proxy 取常數會得到 `Proxy` 型別，無法通過 ty 型別檢查）。
 - **NiceGUI `WindowProxy.create_file_dialog` ty 屬性陷阱**：`WindowProxy` 透過 `__getattr__` 動態轉發，ty 無法偵測屬性。用 `getattr(window, 'create_file_dialog')(...)` 被告知回傳 `Any`，即可通過 ty。
+- **pywebview dialog type 整數值**（`30 = FileDialog.SAVE`；`20 = FileDialog.FOLDER`；`10 = FileDialog.OPEN`）；舊版常數 `SAVE_DIALOG/OPEN_DIALOG/FOLDER_DIALOG` 已 deprecated，但整數值仍可直接使用。
+- **NiceGUI native 匯出檔案**：在 pywebview native 模式下，browser Blob download 無法彈出系統存檔對話框；應使用 `create_file_dialog(30, save_filename=..., file_types=...)` 取得路徑，再以 Python 寫入。
 
 ## Decisions
 
 - 文件（`README.md`、`AGENTS.md`、`MEMORY.md`、`memory/*.md`）預設使用 zh-TW；`README.md` 可保留 zh-TW。
-- 程式碼（`.py`、`.toml` 等）內的所有文字（docstring、comment、error message、UI label）**統一使用英文**；`README.md` 例外。
+- 程式碼（`.py`、`.toml` 等）內的所有文字（docstring、comment、error message、UI label）**統一使用英文**；`README.md` 例外。（AGENTS.md 舊版的「預設 zh-TW 程式註解」已修正為與此一致。）
 - 語系調整不可改動公開介面名稱（例如 CLI 旗標、對外 API 名稱）。
 - Markdown 文件的章節標題（例如 `##`、`###`）以英文為主，本文語系可依文件政策維持 zh-TW。
 - Git commit 訊息採用 Conventional Commits（zh-Hant）規範：`https://www.conventionalcommits.org/zh-hant/v1.0.0/`。
 
 ## Last Updated
 
+- 2026-05-31: fix(gui) - Export Log 加空內容防呆（`if not log_lines`）；下載 header 加入 timestamp/version/url/mode/format/output_dir；`datetime` import 加入。
+- 2026-05-31: fix(gui) - Export Log 改用 native save dialog（`create_file_dialog(30, ...)`）；版本標籤加 `select-text` class 可選取複製。
 - 2026-05-31: 建立 Release workflow（push to main 自動建置 nightly）；移除 SUBTASKS.md；修復 README.md 重複 Disclaimer 與錯位 bullets；AGENTS.md 更正 uv sync 指令描述。
 - 2026-05-31: Windows frozen exe 改為 GUI only；版本格式改為 `v0.0.0+YYYYMMDD.commit[-dirty]`；Browse 按鈕改用 `app.native.main_window` 修復要求；GUI 視窗標題加入版本資訊。
 - 2026-05-30: 修復 PR#3 review：_version.py frozen 版本讀取、spec console=True + gui.py 隱藏視窗、新增 --version 測試、MEMORY.md 符號名稱與命令修正。
