@@ -146,7 +146,7 @@ uv run yt-downloader \
 - **缺少必要參數**：確認有提供 `--url`、`--mode`、`--format`。
 - **參數值不合法**：`--mode` 須為 `video|audio|subtitle`，`--format` 須為 `mp4|webm|mp3|m4a|srt|vtt`。
 - **指令無法執行**：先跑 `uv sync --dev`，再執行 `uv run yt-downloader ...`。
-- **video 輸出兩個分離串流**：表示未偵測到 ffmpeg，請完成上方 FFmpeg Setup。
+- **video 輸出兩個分離串流**：表示系統 ffmpeg 與內建 `imageio-ffmpeg` 均不可用，屬極端 fallback 情形，正常情況下不應發生；請執行 `uv sync --dev` 確認依賴已安裝。
 - **GUI 視窗未出現**：確認 `uv sync --dev` 已執行，並確認 pywebview 平台相容性。
 - **打包後無法執行**：重新執行 `uv run pyinstaller yt-downloader.spec`（須在目標平台執行）。
 - **播放器顯示「不支援 Opus 音效」**：使用 `--format mp4`，目前會優先選擇 `m4a` 音軌再合併輸出。
