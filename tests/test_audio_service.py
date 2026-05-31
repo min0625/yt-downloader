@@ -69,8 +69,11 @@ def test_audio_download_m4a_without_ffmpeg(
         created_instances.append(instance)
         return instance
 
-    # ffmpeg not present
+    # neither system ffmpeg nor bundled ffmpeg present
     monkeypatch.setattr("yt_downloader.services.base.shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "yt_downloader.services.base._get_bundled_ffmpeg_exe", lambda: None
+    )
     monkeypatch.setitem(
         sys.modules, "yt_dlp", SimpleNamespace(YoutubeDL=fake_youtube_dl)
     )

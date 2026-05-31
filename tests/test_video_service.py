@@ -110,6 +110,7 @@ def test_video_download_nonzero_code(
 def test_video_download_fallback_without_ffmpeg(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """When neither system ffmpeg nor bundled ffmpeg is available, downloads separate streams."""
     created_instances: list[FakeYoutubeDL] = []
 
     def fake_youtube_dl(options: dict[str, object]) -> FakeYoutubeDL:
@@ -118,6 +119,9 @@ def test_video_download_fallback_without_ffmpeg(
         return instance
 
     monkeypatch.setattr("yt_downloader.services.base.shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "yt_downloader.services.base._get_bundled_ffmpeg_exe", lambda: None
+    )
     monkeypatch.setitem(
         sys.modules, "yt_dlp", SimpleNamespace(YoutubeDL=fake_youtube_dl)
     )
@@ -144,3 +148,45 @@ def test_video_download_fallback_without_ffmpeg(
     )
     assert str(video_instance.options["outtmpl"]).endswith("%(title)s.video.%(ext)s")
     assert str(audio_instance.options["outtmpl"]).endswith("%(title)s.audio.%(ext)s")
+
+
+def test_video_download_with_bundled_ffmpeg(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When system ffmpeg is absent but imageio-ffmpeg is available, merge mode is used."""
+    created_instances: list[FakeYoutubeDL] = []
+
+    def fake_youtube_dl(options: dict[str, object]) -> FakeYoutubeDL:
+        instance = FakeYoutubeDL(options, result_code=0)
+        created_instances.append(instance)
+        return instance
+
+    monkeypatch.setattr("yt_downloader.services.base.shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "yt_downloader.services.base._get_bundled_ffmpeg_exe",
+        lambda: "/bundled/bin/ffmpeg",
+    )
+    monkeypatch.setitem(
+        sys.modules, "yt_dlp", SimpleNamespace(YoutubeDL=fake_youtube_dl)
+    )
+
+    service = VideoDownloadService()
+    request = DownloadRequest(
+        url="https://youtu.be/dQw4w9WgXcQ",
+        output_dir=tmp_path,
+        format="mp4",
+    )
+
+    service.download(request)
+
+    # Bundled ffmpeg → single download with merge
+    assert len(created_instances) == 1
+    instance = created_instances[0]
+    assert (
+        instance.options["format"]
+        == "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
+    )
+    assert instance.options["merge_output_format"] == "mp4"
+    assert instance.options.get("ffmpeg_location") == str(
+        Path("/bundled/bin/ffmpeg").parent
+    )

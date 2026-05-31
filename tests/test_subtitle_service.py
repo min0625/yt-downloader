@@ -70,7 +70,11 @@ def test_subtitle_download_srt_fallback_without_ffmpeg(
         created_instances.append(instance)
         return instance
 
+    # neither system ffmpeg nor bundled ffmpeg present
     monkeypatch.setattr("yt_downloader.services.base.shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "yt_downloader.services.base._get_bundled_ffmpeg_exe", lambda: None
+    )
     monkeypatch.setitem(
         sys.modules, "yt_dlp", SimpleNamespace(YoutubeDL=fake_youtube_dl)
     )
@@ -84,7 +88,7 @@ def test_subtitle_download_srt_fallback_without_ffmpeg(
     service.download(request)
 
     assert len(created_instances) == 1
-    # Without ffmpeg, srt → falls back to vtt
+    # Without any ffmpeg, srt → falls back to vtt
     assert created_instances[0].options["subtitlesformat"] == "vtt"
 
 
