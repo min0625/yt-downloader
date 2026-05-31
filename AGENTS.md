@@ -78,6 +78,17 @@ Skill 文件位於 `.agents/skills/*/SKILL.md`。
 - 遇到特定領域任務時，優先讀取對應 skill（例如 `uv-package-manager`、`python-pro`、`python-configuration`）。
 - 進行該領域的實作前，先吸收對應 skill 指引。
 
+## Serena MCP Server
+
+本專案已整合 [Serena](https://github.com/oraios/serena) 語意編碼工具：
+
+- **MCP 伺服器設定**：`.vscode/mcp.json`（VS Code 自動啟動 Serena）
+- **Copilot Hooks**：`.github/hooks/serena-hooks.json`（SessionStart 自動 activate、PreToolUse remind）
+- **專案設定**：`.serena/project.yml`（語言：Python、編碼：UTF-8）
+- **Serena 記憶**：`.serena/memories/`（獨立於 `MEMORY.md` 的 Serena 內部記憶存放區）
+
+Agent 使用 Serena 時，務必先呼叫 `initial_instructions` 工具讀取操作手冊，再進行符號分析與編輯。
+
 ## Agent Memory Mechanism (`MEMORY.md`)
 
 `MEMORY.md` 為跨回合共享的長期專案記憶。

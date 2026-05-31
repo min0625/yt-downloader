@@ -53,7 +53,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 - 本 repo 的暫存下載輸出位於 `downloads/`，需透過 `.gitignore` 排除，避免媒體檔誤入版控。
 - 進行 PR review 時先以 diff/changed files 為準，再比對 PR 內文摘要；PR 描述可能未即時反映後續 amend。
 - 技能文件安全檢視需區分「教學示例」與「實際執行指令」：例如 `curl|sh`/`irm|iex` 或未參數化 SQL 可能出現在示例中，應標記為高風險樣式但不直接等同惡意。
-- 若需驗證目前 CLI 介面、分派與所有服務回歸，先執行 `uv run pytest`；目前基準為 `collected 18 items` 並應全部通過。
+- 若需驗證目前 CLI 介面、分派與所有服務回歸，先執行 `uv run pytest`；目前基準為 `collected 19 items` 並應全部通過。
 - 若 `video` 產出為 `.video.*` + `.audio.*` 兩檔，代表「系統 ffmpeg 與 imageio-ffmpeg 均不可用」的極端 fallback 路徑，正常情況下 imageio-ffmpeg 為依賴故不會發生。
 - imageio-ffmpeg 只提供 `ffmpeg`（無 `ffprobe`），yt-dlp 的合併（FFmpegMergerPP）與音訊轉換（FFmpegExtractAudio）均只需 ffmpeg，故功能正常；ffprobe 版本顯示為 None 屬預期行為。
 - `_get_bundled_ffmpeg_exe()` 傳回 ffmpeg 可執行檔路徑；`_get_ffmpeg_location()` 傳回其父目錄（傳給 yt-dlp 的 `ffmpeg_location`）。測試中可 monkeypatch `yt_downloader.services.base._get_bundled_ffmpeg_exe`。
@@ -77,6 +77,7 @@ Project memory index for YT Downloader. Keep this file concise and high-signal.
 
 ## Last Updated
 
+- 2026-06-01: chore(serena) - 新增 Serena MCP server 整合（`.vscode/mcp.json`、`.github/hooks/serena-hooks.json`、`.serena/`）；修正 Pitfalls 測試數量 18→19；修正 README.md 過時 FFmpeg Setup 引用；AGENTS.md 新增 Serena 配置說明。
 - 2026-05-31: feat(services) - 新增 imageio-ffmpeg 作為 bundled ffmpeg 供應者；修改 `_has_ffmpeg`、新增 `_get_bundled_ffmpeg_exe`/`_get_ffmpeg_location`；更新 spec 打包 binary；測試增至 19 項；README 移除手動安裝 ffmpeg 要求。
 - 2026-05-31: fix(gui) - Export Log 加空內容防呆（`if not log_lines`）；下載 header 加入 timestamp/version/url/mode/format/output_dir；`datetime` import 加入。
 - 2026-05-31: fix(gui) - Export Log 改用 native save dialog（`create_file_dialog(30, ...)`）；版本標籤加 `select-text` class 可選取複製。
