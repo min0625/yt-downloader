@@ -33,7 +33,7 @@ def _build_ui() -> None:
         ui.label("YT Downloader").classes("text-3xl font-bold")
 
         url_input = ui.input(
-            label="YouTube URL",
+            label="YouTube 網址",
             placeholder="https://www.youtube.com/watch?v=...",
         ).classes("w-full")
 
@@ -41,23 +41,23 @@ def _build_ui() -> None:
             mode_select = ui.select(
                 options=MODES,
                 value="video",
-                label="Download Mode",
+                label="下載模式",
             ).classes("flex-1")
 
             format_select = ui.select(
                 options=FORMAT_OPTIONS["video"],
                 value="mp4",
-                label="Output Format",
+                label="輸出格式",
             ).classes("flex-1")
 
         with ui.row().classes("w-full gap-2 items-end"):
             output_dir_input = ui.input(
-                label="Output Directory",
+                label="輸出目錄",
                 value=str(Path.home() / "Downloads"),
             ).classes("flex-1")
-            pick_dir_btn = ui.button("Browse...")
+            pick_dir_btn = ui.button("瀏覽...")
 
-        download_btn = ui.button("Start Download").classes("w-full")
+        download_btn = ui.button("開始下載").classes("w-full")
 
         log_lines: list[str] = []
         log = ui.log(max_lines=200).classes("w-full h-48 font-mono text-sm yt-dl-log")
@@ -72,16 +72,16 @@ def _build_ui() -> None:
                 f"navigator.clipboard.writeText({json.dumps(content)})",
                 timeout=5.0,
             )
-            ui.notify("Copied to clipboard", type="positive")
+            ui.notify("已複製到剪貼板", type="positive")
 
         async def on_export_log() -> None:
             """Export log via native save dialog."""
             if not log_lines:
-                ui.notify("No log content to export", type="warning")
+                ui.notify("沒有可匯出的日誌內容", type="warning")
                 return
             window = app.native.main_window
             if window is None:
-                ui.notify("Unable to open save dialog", type="warning")
+                ui.notify("無法開啟儲存對話框", type="warning")
                 return
             try:
                 # 30 = webview.FileDialog.SAVE (integer literal avoids NiceGUI proxy type issue)
@@ -99,9 +99,9 @@ def _build_ui() -> None:
                     Path(save_path).write_text(content, encoding="utf-8")
 
                 await run.io_bound(write_file)
-                ui.notify(f"Log saved to {save_path}", type="positive")
+                ui.notify(f"日誌已儲存至 {save_path}", type="positive")
             except Exception as exc:
-                ui.notify(f"Unable to save log: {exc}", type="warning")
+                ui.notify(f"無法儲存日誌：{exc}", type="warning")
 
         def push_log(msg: str) -> None:
             """Push a message to the log UI and internal buffer."""
@@ -109,10 +109,10 @@ def _build_ui() -> None:
             log_lines.append(msg)
 
         with ui.row().classes("w-full gap-2 justify-end"):
-            ui.button("Copy Log", on_click=on_copy_log).props(
+            ui.button("複製日誌", on_click=on_copy_log).props(
                 "flat dense icon=content_copy"
             )
-            ui.button("Export Log", on_click=on_export_log).props(
+            ui.button("匯出日誌", on_click=on_export_log).props(
                 "flat dense icon=download"
             )
 
@@ -133,7 +133,7 @@ def _build_ui() -> None:
         try:
             window = app.native.main_window
             if window is None:
-                ui.notify("Unable to open folder picker", type="warning")
+                ui.notify("無法開啟資料夾選擇器", type="warning")
                 return
             current = (output_dir_input.value or "").strip() or str(
                 Path.home() / "Downloads"
@@ -148,14 +148,14 @@ def _build_ui() -> None:
             if result:
                 output_dir_input.value = result[0]
         except Exception as exc:
-            ui.notify(f"Unable to open folder picker: {exc}", type="warning")
+            ui.notify(f"無法開啟資料夾選擇器：{exc}", type="warning")
 
     pick_dir_btn.on_click(on_pick_folder)
 
     async def on_download_click() -> None:
         url = (url_input.value or "").strip()
         if not url:
-            ui.notify("Please enter a YouTube URL", type="warning")
+            ui.notify("請輸入 YouTube 網址", type="warning")
             return
 
         mode = mode_select.value or "video"
@@ -164,7 +164,7 @@ def _build_ui() -> None:
 
         download_btn.props("disabled")
         started_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        push_log(f"[{started_at}] ▶ Starting download")
+        push_log(f"[{started_at}] ▶ 開始下載")
         push_log(f"  version    : {format_version_compact()}")
         push_log(f"  url        : {url}")
         push_log(f"  mode       : {mode}")
@@ -180,9 +180,9 @@ def _build_ui() -> None:
                 percent = (d.get("_percent_str") or "").strip()
                 speed = (d.get("_speed_str") or "").strip()
                 eta = (d.get("_eta_str") or "").strip()
-                msg_queue.put(f"  Downloading {percent}  Speed {speed}  ETA {eta}")
+                msg_queue.put(f"  下載中 {percent}  速度 {speed}  預計剩餘 {eta}")
             elif status == "finished":
-                msg_queue.put("  Stream download complete, post-processing...")
+                msg_queue.put("  串流下載完成，後處理中...")
 
         request = DownloadRequest(
             url=url,
@@ -218,11 +218,11 @@ def _build_ui() -> None:
         error: str | None = download_future.result()
 
         if error:
-            push_log(f"\u2717 Error: {error}")
-            ui.notify("Download failed", type="negative")
+            push_log(f"\u2717 錯誤：{error}")
+            ui.notify("下載失敗", type="negative")
         else:
-            push_log("\u2713 Download complete!")
-            ui.notify("Download complete!", type="positive")
+            push_log("\u2713 下載完成！")
+            ui.notify("下載完成！", type="positive")
 
         download_btn.props(remove="disabled")
 
